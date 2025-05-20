@@ -43,6 +43,7 @@ USERS_COLLECTION = "users"
 ISLANDS_COLLECTION = "islands"
 VISITS_COLLECTION = "visits"
 BADGES_COLLECTION = "badges"
+BLOG_POSTS_COLLECTION = "blog_posts"
 
 # Define Models
 class Island(BaseModel):
