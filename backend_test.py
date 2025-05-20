@@ -195,6 +195,30 @@ if __name__ == "__main__":
     suite.addTest(MaldivesIslandTrackerAPITest("test_08_get_user_visits"))
     suite.addTest(MaldivesIslandTrackerAPITest("test_09_get_visited_islands"))
     
-    # Run the tests
+    # Run the tests with more detailed output
+    print("\n===== MALDIVES ISLAND TRACKER API TEST =====\n")
     runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(suite)
+    result = runner.run(suite)
+    
+    # Print summary
+    print("\n===== TEST SUMMARY =====")
+    print(f"Total tests: {result.testsRun}")
+    print(f"Passed: {result.testsRun - len(result.failures) - len(result.errors)}")
+    print(f"Failed: {len(result.failures)}")
+    print(f"Errors: {len(result.errors)}")
+    
+    if result.failures:
+        print("\n===== FAILURES =====")
+        for test, error in result.failures:
+            print(f"\n{test}")
+            print(error)
+    
+    if result.errors:
+        print("\n===== ERRORS =====")
+        for test, error in result.errors:
+            print(f"\n{test}")
+            print(error)
+            
+    # Return exit code based on test results
+    import sys
+    sys.exit(len(result.failures) + len(result.errors))
