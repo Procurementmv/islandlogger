@@ -63,6 +63,8 @@ export default function Map({ islands }) {
       setVisitedIslands(visitedIds);
     } catch (error) {
       console.error('Error fetching visited islands:', error);
+      // If there's an error, set visitedIslands to an empty array
+      setVisitedIslands([]);
     }
   };
 
