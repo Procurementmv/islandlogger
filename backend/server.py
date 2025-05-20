@@ -699,7 +699,21 @@ async def initialize_data():
                 "lng": 72.9897,
                 "type": "resort",
                 "description": "Luxury resort island with water villas",
-                "tags": ["resort", "luxury", "diving"]
+                "tags": ["resort", "luxury", "diving"],
+                "photos": [
+                    {
+                        "url": "https://images.unsplash.com/photo-1586375300573-8606124f5896?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Water villas at sunset"
+                    },
+                    {
+                        "url": "https://images.unsplash.com/photo-1540541338287-41700207dee6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Beach restaurant"
+                    },
+                    {
+                        "url": "https://images.unsplash.com/photo-1439066615861-d1af74d74000?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Aerial view of the resort"
+                    }
+                ]
             },
             {
                 "name": "Maafushi",
@@ -709,7 +723,17 @@ async def initialize_data():
                 "type": "inhabited",
                 "population": 3025,
                 "description": "Popular local island for tourism",
-                "tags": ["local", "tourism", "budget"]
+                "tags": ["local", "tourism", "budget"],
+                "photos": [
+                    {
+                        "url": "https://images.unsplash.com/photo-1544550581-1bcf3a2f2b15?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Beach at Maafushi"
+                    },
+                    {
+                        "url": "https://images.unsplash.com/photo-1541777880320-8a826bed1398?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Local street scene"
+                    }
+                ]
             },
             {
                 "name": "Baros",
