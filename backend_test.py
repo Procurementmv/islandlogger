@@ -125,7 +125,107 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
             else:
                 print(f"⚠️ Filter islands by {island_type} successful but no islands found")
 
-    def test_07_mark_island_as_visited(self):
+    def test_07_search_islands(self):
+        """Test searching islands by name, atoll, or tag"""
+        print("\n🔍 Testing search islands")
+        
+        # First get all islands to find search terms
+        response = requests.get(f"{self.base_url}/islands")
+        self.assertEqual(response.status_code, 200, f"Get islands failed: {response.text}")
+        islands = response.json()
+        
+        if not islands:
+            self.skipTest("No islands available for search test")
+        
+        # Test search by name
+        sample_island = islands[0]
+        name_search = sample_island["name"][:4]  # Use first few characters of name
+        
+        print(f"Searching islands by name: '{name_search}'")
+        response = requests.get(f"{self.base_url}/islands?search={name_search}")
+        
+        self.assertEqual(response.status_code, 200, f"Search islands by name failed: {response.text}")
+        search_results = response.json()
+        
+        # Check if results contain islands with the search term in name
+        if search_results:
+            found = any(name_search.lower() in island["name"].lower() for island in search_results)
+            self.assertTrue(found, f"Search results don't contain islands with '{name_search}' in name")
+            print(f"✅ Search islands by name successful - Found {len(search_results)} islands")
+        else:
+            print(f"⚠️ Search islands by name returned no results for '{name_search}'")
+        
+        # Test search by atoll
+        if "atoll" in sample_island and sample_island["atoll"]:
+            atoll_search = sample_island["atoll"]
+            
+            print(f"Searching islands by atoll: '{atoll_search}'")
+            response = requests.get(f"{self.base_url}/islands?search={atoll_search}")
+            
+            self.assertEqual(response.status_code, 200, f"Search islands by atoll failed: {response.text}")
+            search_results = response.json()
+            
+            # Check if results contain islands with the search term in atoll
+            if search_results:
+                found = any(atoll_search.lower() in island["atoll"].lower() for island in search_results)
+                self.assertTrue(found, f"Search results don't contain islands with '{atoll_search}' in atoll")
+                print(f"✅ Search islands by atoll successful - Found {len(search_results)} islands")
+            else:
+                print(f"⚠️ Search islands by atoll returned no results for '{atoll_search}'")
+        
+        # Test search by tag
+        if "tags" in sample_island and sample_island["tags"]:
+            tag_search = sample_island["tags"][0]
+            
+            print(f"Searching islands by tag: '{tag_search}'")
+            response = requests.get(f"{self.base_url}/islands?search={tag_search}")
+            
+            self.assertEqual(response.status_code, 200, f"Search islands by tag failed: {response.text}")
+            search_results = response.json()
+            
+            # Check if results contain islands with the search term in tags
+            if search_results:
+                found = any(tag_search.lower() in [tag.lower() for tag in island["tags"]] for island in search_results if "tags" in island)
+                self.assertTrue(found, f"Search results don't contain islands with '{tag_search}' in tags")
+                print(f"✅ Search islands by tag successful - Found {len(search_results)} islands")
+            else:
+                print(f"⚠️ Search islands by tag returned no results for '{tag_search}'")
+
+    def test_08_filter_islands_by_atoll(self):
+        """Test filtering islands by atoll"""
+        print("\n🔍 Testing filter islands by atoll")
+        
+        # First get all islands to find available atolls
+        response = requests.get(f"{self.base_url}/islands")
+        self.assertEqual(response.status_code, 200, f"Get islands failed: {response.text}")
+        islands = response.json()
+        
+        if not islands:
+            self.skipTest("No islands available for atoll filter test")
+        
+        # Extract unique atolls
+        atolls = list(set(island["atoll"] for island in islands if "atoll" in island))
+        
+        if not atolls:
+            self.skipTest("No atolls available for filter test")
+        
+        # Test filtering by each atoll
+        for atoll in atolls[:3]:  # Test first 3 atolls to keep test shorter
+            print(f"Filtering islands by atoll: '{atoll}'")
+            response = requests.get(f"{self.base_url}/islands?atoll={atoll}")
+            
+            self.assertEqual(response.status_code, 200, f"Filter islands by atoll '{atoll}' failed: {response.text}")
+            filtered_islands = response.json()
+            
+            # Check if all returned islands match the requested atoll
+            if filtered_islands:
+                all_match = all(island["atoll"] == atoll for island in filtered_islands)
+                self.assertTrue(all_match, f"Not all islands are in atoll '{atoll}'")
+                print(f"✅ Filter islands by atoll '{atoll}' successful - Found {len(filtered_islands)} islands")
+            else:
+                print(f"⚠️ Filter islands by atoll '{atoll}' successful but no islands found")
+
+    def test_09_mark_island_as_visited(self):
         """Test marking an island as visited"""
         print("\n🔍 Testing mark island as visited")
         
@@ -148,7 +248,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, f"Mark island as visited failed: {response.text}")
         print("✅ Mark island as visited successful")
 
-    def test_08_get_user_visits(self):
+    def test_10_get_user_visits(self):
         """Test getting user visits"""
         print("\n🔍 Testing get user visits")
         
@@ -170,7 +270,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         else:
             print("❌ Get user visits successful but no visits found")
 
-    def test_09_get_visited_islands(self):
+    def test_11_get_visited_islands(self):
         """Test getting visited islands"""
         print("\n🔍 Testing get visited islands")
         
@@ -192,7 +292,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         else:
             print("❌ Get visited islands successful but no visited islands found")
             
-    def test_10_get_blog_posts(self):
+    def test_12_get_blog_posts(self):
         """Test getting blog posts"""
         print("\n🔍 Testing get blog posts")
         
@@ -209,7 +309,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         else:
             print("⚠️ Get blog posts successful but no posts found")
             
-    def test_11_get_blog_post_by_slug(self):
+    def test_13_get_blog_post_by_slug(self):
         """Test getting blog post by slug"""
         print("\n🔍 Testing get blog post by slug")
         
@@ -223,7 +323,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         self.assertEqual(post["slug"], self.blog_post_slug, "Blog post slug mismatch")
         print(f"✅ Get blog post by slug successful - {post['title']}")
         
-    def test_12_admin_login(self):
+    def test_14_admin_login(self):
         """Test admin login"""
         print("\n🔍 Testing admin login")
         
@@ -245,7 +345,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         self.admin_token = data["access_token"]
         print("✅ Admin login successful")
         
-    def test_13_get_admin_profile(self):
+    def test_15_get_admin_profile(self):
         """Test getting admin profile"""
         print("\n🔍 Testing get admin profile")
         
@@ -262,7 +362,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         self.assertTrue(data["is_admin"], "User is not an admin")
         print("✅ Get admin profile successful")
         
-    def test_14_get_all_users(self):
+    def test_16_get_all_users(self):
         """Test getting all users as admin"""
         print("\n🔍 Testing get all users as admin")
         
@@ -278,7 +378,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         self.assertIsInstance(users, list, "Users response is not a list")
         print(f"✅ Get all users successful - Found {len(users)} users")
         
-    def test_15_create_blog_post(self):
+    def test_17_create_blog_post(self):
         """Test creating a blog post as admin"""
         print("\n🔍 Testing create blog post as admin")
         
@@ -305,7 +405,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         self.blog_post_slug = post["slug"]
         print(f"✅ Create blog post successful - ID: {self.blog_post_id}")
         
-    def test_16_create_island(self):
+    def test_18_create_island(self):
         """Test creating an island as admin"""
         print("\n🔍 Testing create island as admin")
         
@@ -341,7 +441,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         self.assertEqual(delete_response.status_code, 204, f"Delete island failed: {delete_response.text}")
         print(f"✅ Delete island successful - ID: {test_island_id}")
         
-    def test_17_delete_blog_post(self):
+    def test_19_delete_blog_post(self):
         """Test deleting a blog post as admin"""
         print("\n🔍 Testing delete blog post as admin")
         
@@ -367,17 +467,19 @@ if __name__ == "__main__":
     suite.addTest(MaldivesIslandTrackerAPITest("test_04_get_islands"))
     suite.addTest(MaldivesIslandTrackerAPITest("test_05_get_island_by_id"))
     suite.addTest(MaldivesIslandTrackerAPITest("test_06_filter_islands_by_type"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_07_mark_island_as_visited"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_08_get_user_visits"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_09_get_visited_islands"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_10_get_blog_posts"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_11_get_blog_post_by_slug"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_12_admin_login"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_13_get_admin_profile"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_14_get_all_users"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_15_create_blog_post"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_16_create_island"))
-    suite.addTest(MaldivesIslandTrackerAPITest("test_17_delete_blog_post"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_07_search_islands"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_08_filter_islands_by_atoll"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_09_mark_island_as_visited"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_10_get_user_visits"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_11_get_visited_islands"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_12_get_blog_posts"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_13_get_blog_post_by_slug"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_14_admin_login"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_15_get_admin_profile"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_16_get_all_users"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_17_create_blog_post"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_18_create_island"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_19_delete_blog_post"))
     
     # Run the tests with more detailed output
     print("\n===== MALDIVES ISLAND TRACKER API TEST =====\n")
