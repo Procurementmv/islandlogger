@@ -313,6 +313,187 @@ async def get_visited_islands(current_user: User = Depends(get_current_user)):
         return [Island(**island) for island in islands]
     return []
 
+# API Routes - Blog
+@api_router.get("/blog", response_model=List[BlogPost])
+async def get_blog_posts(
+    skip: int = 0, 
+    limit: int = 10, 
+    tag: Optional[str] = None,
+    published_only: bool = True
+):
+    query = {"is_published": True} if published_only else {}
+    if tag:
+        query["tags"] = tag
+    
+    blog_posts = await db[BLOG_POSTS_COLLECTION].find(query).skip(skip).limit(limit).to_list(limit)
+    return [BlogPost(**post) for post in blog_posts]
+
+@api_router.get("/blog/{slug}", response_model=BlogPost)
+async def get_blog_post(slug: str):
+    post = await db[BLOG_POSTS_COLLECTION].find_one({"slug": slug})
+    if not post:
+        raise HTTPException(status_code=404, detail="Blog post not found")
+    return BlogPost(**post)
+
+# Admin Routes - Blog Management
+@api_router.post("/admin/blog", response_model=BlogPost)
+async def create_blog_post(
+    post_data: BlogPostCreate,
+    current_admin: User = Depends(get_current_admin)
+):
+    # Check if slug already exists
+    existing_post = await db[BLOG_POSTS_COLLECTION].find_one({"slug": post_data.slug})
+    if existing_post:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Blog post with this slug already exists"
+        )
+    
+    # Create new blog post
+    blog_post = BlogPost(
+        **post_data.model_dump(),
+        author_id=current_admin.id,
+        published_date=post_data.published_date or datetime.utcnow() if post_data.is_published else None
+    )
+    
+    await db[BLOG_POSTS_COLLECTION].insert_one(blog_post.model_dump())
+    return blog_post
+
+@api_router.put("/admin/blog/{post_id}", response_model=BlogPost)
+async def update_blog_post(
+    post_id: str,
+    post_data: BlogPostCreate,
+    current_admin: User = Depends(get_current_admin)
+):
+    # Check if blog post exists
+    existing_post = await db[BLOG_POSTS_COLLECTION].find_one({"id": post_id})
+    if not existing_post:
+        raise HTTPException(status_code=404, detail="Blog post not found")
+    
+    # Check for slug collision (but exclude current post)
+    if post_data.slug != existing_post["slug"]:
+        collision = await db[BLOG_POSTS_COLLECTION].find_one({
+            "slug": post_data.slug,
+            "id": {"$ne": post_id}
+        })
+        if collision:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Blog post with this slug already exists"
+            )
+    
+    # Update the blog post
+    update_data = post_data.model_dump()
+    update_data["updated_at"] = datetime.utcnow()
+    
+    # Update published date if publishing for the first time
+    if post_data.is_published and not existing_post.get("is_published"):
+        update_data["published_date"] = post_data.published_date or datetime.utcnow()
+    
+    await db[BLOG_POSTS_COLLECTION].update_one(
+        {"id": post_id},
+        {"$set": update_data}
+    )
+    
+    updated_post = await db[BLOG_POSTS_COLLECTION].find_one({"id": post_id})
+    return BlogPost(**updated_post)
+
+@api_router.delete("/admin/blog/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_blog_post(
+    post_id: str,
+    current_admin: User = Depends(get_current_admin)
+):
+    # Check if blog post exists
+    existing_post = await db[BLOG_POSTS_COLLECTION].find_one({"id": post_id})
+    if not existing_post:
+        raise HTTPException(status_code=404, detail="Blog post not found")
+    
+    await db[BLOG_POSTS_COLLECTION].delete_one({"id": post_id})
+    return None
+
+# Admin Routes - User Management
+@api_router.get("/admin/users", response_model=List[User])
+async def get_all_users(
+    skip: int = 0,
+    limit: int = 100,
+    current_admin: User = Depends(get_current_admin)
+):
+    users = await db[USERS_COLLECTION].find().skip(skip).limit(limit).to_list(limit)
+    return [User(**user) for user in users]
+
+@api_router.put("/admin/users/{user_id}", response_model=User)
+async def update_user(
+    user_id: str,
+    is_admin: bool,
+    current_admin: User = Depends(get_current_admin)
+):
+    # Check if user exists
+    user = await db[USERS_COLLECTION].find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update user admin status
+    await db[USERS_COLLECTION].update_one(
+        {"id": user_id},
+        {"$set": {"is_admin": is_admin}}
+    )
+    
+    updated_user = await db[USERS_COLLECTION].find_one({"id": user_id})
+    return User(**updated_user)
+
+# Admin Routes - Island Management
+@api_router.post("/admin/islands", response_model=Island)
+async def admin_create_island(
+    island_data: IslandCreate,
+    current_admin: User = Depends(get_current_admin)
+):
+    island = Island(**island_data.model_dump())
+    await db[ISLANDS_COLLECTION].insert_one(island.model_dump())
+    return island
+
+@api_router.put("/admin/islands/{island_id}", response_model=Island)
+async def admin_update_island(
+    island_id: str,
+    island_data: IslandCreate,
+    current_admin: User = Depends(get_current_admin)
+):
+    # Check if island exists
+    island = await db[ISLANDS_COLLECTION].find_one({"id": island_id})
+    if not island:
+        raise HTTPException(status_code=404, detail="Island not found")
+    
+    # Update the island
+    update_data = island_data.model_dump()
+    
+    await db[ISLANDS_COLLECTION].update_one(
+        {"id": island_id},
+        {"$set": update_data}
+    )
+    
+    updated_island = await db[ISLANDS_COLLECTION].find_one({"id": island_id})
+    return Island(**updated_island)
+
+@api_router.delete("/admin/islands/{island_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def admin_delete_island(
+    island_id: str,
+    current_admin: User = Depends(get_current_admin)
+):
+    # Check if island exists
+    island = await db[ISLANDS_COLLECTION].find_one({"id": island_id})
+    if not island:
+        raise HTTPException(status_code=404, detail="Island not found")
+    
+    # Check if island has visits
+    visit_count = await db[VISITS_COLLECTION].count_documents({"island_id": island_id})
+    if visit_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete island with {visit_count} visits"
+        )
+    
+    await db[ISLANDS_COLLECTION].delete_one({"id": island_id})
+    return None
+
 # Initialize the Maldives islands data if the collection is empty
 @app.on_event("startup")
 async def initialize_data():
