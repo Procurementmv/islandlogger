@@ -131,7 +131,7 @@ export default function Map({ islands }) {
           />
           
           {filteredIslands.map(island => {
-            const isVisited = visitedIslands.has(island.id);
+            const isVisited = visitedIslands.includes(island.id);
             return (
               <Marker
                 key={island.id}
