@@ -142,14 +142,18 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         # Get the created ad
         ad_id = created_ad["id"]
         response = requests.get(
-            f"{BACKEND_URL}/admin/ads/{ad_id}",
+            f"{BACKEND_URL}/admin/ads",
             headers=self.headers
         )
         
-        self.assertEqual(response.status_code, 200, "Get ad request failed")
-        retrieved_ad = response.json()
-        self.assertEqual(retrieved_ad["name"], new_ad["name"], "Retrieved ad name doesn't match")
-        print(f"✅ Retrieved ad: {retrieved_ad['name']}")
+        self.assertEqual(response.status_code, 200, "Get ads request failed")
+        ads = response.json()
+        
+        # Find our ad in the list
+        found_ad = next((ad for ad in ads if ad["id"] == ad_id), None)
+        self.assertIsNotNone(found_ad, f"Could not find created ad with ID {ad_id}")
+        self.assertEqual(found_ad["name"], new_ad["name"], "Retrieved ad name doesn't match")
+        print(f"✅ Retrieved ad: {found_ad['name']}")
         
         # Update the ad
         update_data = {
