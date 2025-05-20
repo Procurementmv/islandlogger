@@ -1,38 +1,96 @@
-.App {
-    text-align: center;
+/* Import Leaflet CSS */
+@import '~leaflet/dist/leaflet.css';
+
+/* Custom map marker styling */
+.custom-marker-icon {
+  background-color: #3B82F6;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  text-align: center;
+  color: white;
+  font-weight: bold;
 }
 
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+.marker-resort {
+  background-color: #10B981; /* green */
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+.marker-inhabited {
+  background-color: #3B82F6; /* blue */
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+.marker-uninhabited {
+  background-color: #F59E0B; /* yellow */
 }
 
-.App-link {
-    color: #61dafb;
+.marker-industrial {
+  background-color: #6B7280; /* gray */
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.marker-visited {
+  border: 3px solid #EC4899; /* pink border for visited islands */
+}
+
+/* Ad space styling */
+.ad-container {
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  padding: 8px;
+  margin: 8px 0;
+  text-align: center;
+  border: 1px dashed #d1d5db;
+}
+
+.ad-label {
+  font-size: 10px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Island card styling */
+.island-card {
+  transition: transform 0.2s;
+}
+
+.island-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Badge styling */
+.badge {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  border: 2px solid #E5E7EB;
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-earned {
+  border-color: #10B981;
+  background-color: #D1FAE5;
+}
+
+.badge-icon {
+  font-size: 32px;
+}
+
+/* Helper classes */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+}
+
+.tropical-gradient {
+  background: linear-gradient(135deg, #0EA5E9 0%, #10B981 100%);
 }
