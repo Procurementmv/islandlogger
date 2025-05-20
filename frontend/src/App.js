@@ -24,6 +24,8 @@ import IslandForm from "./components/admin/IslandForm";
 import BlogManager from "./components/admin/BlogManager";
 import UserManager from "./components/admin/UserManager";
 import AnalyticsDashboard from "./components/admin/AnalyticsDashboard";
+import AdManager from "./components/admin/AdManager";
+import AdForm from "./components/admin/AdForm";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
