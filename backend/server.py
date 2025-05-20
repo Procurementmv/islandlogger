@@ -197,6 +197,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
     return user
 
+async def get_current_admin(current_user: User = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    return current_user
+
 # API Routes - Auth
 @api_router.post("/register", response_model=User)
 async def register_user(user_data: UserCreate):
