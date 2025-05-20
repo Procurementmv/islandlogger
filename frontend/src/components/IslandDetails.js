@@ -194,6 +194,9 @@ export default function IslandDetails() {
                 </dl>
               </div>
               
+              {/* Photo Gallery */}
+              <IslandGallery photos={island.photos || []} />
+              
               {/* Tags */}
               {island.tags && island.tags.length > 0 && (
                 <div className="mt-4">
