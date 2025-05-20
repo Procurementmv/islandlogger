@@ -100,7 +100,8 @@ function App() {
             ) : (
               <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<Map islands={islands} />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/map" element={<Map islands={islands} />} />
                 <Route path="/island/:id" element={<IslandDetails />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
