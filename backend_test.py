@@ -191,6 +191,170 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
             print(f"✅ Get visited islands successful - Found {len(islands)} visited islands")
         else:
             print("❌ Get visited islands successful but no visited islands found")
+            
+    def test_10_get_blog_posts(self):
+        """Test getting blog posts"""
+        print("\n🔍 Testing get blog posts")
+        
+        response = requests.get(f"{self.base_url}/blog")
+        
+        self.assertEqual(response.status_code, 200, f"Get blog posts failed: {response.text}")
+        posts = response.json()
+        self.assertIsInstance(posts, list, "Blog posts response is not a list")
+        
+        if posts:
+            print(f"✅ Get blog posts successful - Found {len(posts)} posts")
+            # Save the first blog post slug for later tests
+            self.blog_post_slug = posts[0]["slug"]
+        else:
+            print("⚠️ Get blog posts successful but no posts found")
+            
+    def test_11_get_blog_post_by_slug(self):
+        """Test getting blog post by slug"""
+        print("\n🔍 Testing get blog post by slug")
+        
+        if not self.blog_post_slug:
+            self.skipTest("No blog post slug available")
+        
+        response = requests.get(f"{self.base_url}/blog/{self.blog_post_slug}")
+        
+        self.assertEqual(response.status_code, 200, f"Get blog post by slug failed: {response.text}")
+        post = response.json()
+        self.assertEqual(post["slug"], self.blog_post_slug, "Blog post slug mismatch")
+        print(f"✅ Get blog post by slug successful - {post['title']}")
+        
+    def test_12_admin_login(self):
+        """Test admin login"""
+        print("\n🔍 Testing admin login")
+        
+        response = requests.post(
+            f"{self.base_url}/login",
+            data={
+                "username": self.admin_credentials["username"],
+                "password": self.admin_credentials["password"]
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"}
+        )
+        
+        print(f"Admin login response status: {response.status_code}")
+        print(f"Admin login response body: {response.text}")
+        
+        self.assertEqual(response.status_code, 200, f"Admin login failed: {response.text}")
+        data = response.json()
+        self.assertIn("access_token", data, "No access token in response")
+        self.admin_token = data["access_token"]
+        print("✅ Admin login successful")
+        
+    def test_13_get_admin_profile(self):
+        """Test getting admin profile"""
+        print("\n🔍 Testing get admin profile")
+        
+        self.assertIsNotNone(self.admin_token, "No admin token available")
+        
+        response = requests.get(
+            f"{self.base_url}/users/me",
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        self.assertEqual(response.status_code, 200, f"Get admin profile failed: {response.text}")
+        data = response.json()
+        self.assertEqual(data["email"], self.admin_credentials["username"], "Admin email mismatch")
+        self.assertTrue(data["is_admin"], "User is not an admin")
+        print("✅ Get admin profile successful")
+        
+    def test_14_get_all_users(self):
+        """Test getting all users as admin"""
+        print("\n🔍 Testing get all users as admin")
+        
+        self.assertIsNotNone(self.admin_token, "No admin token available")
+        
+        response = requests.get(
+            f"{self.base_url}/admin/users",
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        self.assertEqual(response.status_code, 200, f"Get all users failed: {response.text}")
+        users = response.json()
+        self.assertIsInstance(users, list, "Users response is not a list")
+        print(f"✅ Get all users successful - Found {len(users)} users")
+        
+    def test_15_create_blog_post(self):
+        """Test creating a blog post as admin"""
+        print("\n🔍 Testing create blog post as admin")
+        
+        self.assertIsNotNone(self.admin_token, "No admin token available")
+        
+        blog_post_data = {
+            "title": f"Test Blog Post {uuid.uuid4().hex[:8]}",
+            "content": "This is a test blog post created by the API test.",
+            "slug": f"test-blog-post-{uuid.uuid4().hex[:8]}",
+            "excerpt": "Test blog post excerpt",
+            "tags": ["test", "api"],
+            "is_published": True
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/admin/blog",
+            json=blog_post_data,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        self.assertEqual(response.status_code, 200, f"Create blog post failed: {response.text}")
+        post = response.json()
+        self.blog_post_id = post["id"]
+        self.blog_post_slug = post["slug"]
+        print(f"✅ Create blog post successful - ID: {self.blog_post_id}")
+        
+    def test_16_create_island(self):
+        """Test creating an island as admin"""
+        print("\n🔍 Testing create island as admin")
+        
+        self.assertIsNotNone(self.admin_token, "No admin token available")
+        
+        island_data = {
+            "name": f"Test Island {uuid.uuid4().hex[:8]}",
+            "atoll": "Test Atoll",
+            "lat": 4.1755 + (uuid.uuid4().int % 100) / 1000,
+            "lng": 73.5093 + (uuid.uuid4().int % 100) / 1000,
+            "type": "uninhabited",
+            "description": "This is a test island created by the API test.",
+            "tags": ["test", "api"]
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/admin/islands",
+            json=island_data,
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        self.assertEqual(response.status_code, 200, f"Create island failed: {response.text}")
+        island = response.json()
+        test_island_id = island["id"]
+        print(f"✅ Create island successful - ID: {test_island_id}")
+        
+        # Clean up by deleting the test island
+        delete_response = requests.delete(
+            f"{self.base_url}/admin/islands/{test_island_id}",
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        self.assertEqual(delete_response.status_code, 204, f"Delete island failed: {delete_response.text}")
+        print(f"✅ Delete island successful - ID: {test_island_id}")
+        
+    def test_17_delete_blog_post(self):
+        """Test deleting a blog post as admin"""
+        print("\n🔍 Testing delete blog post as admin")
+        
+        if not self.blog_post_id or not self.admin_token:
+            self.skipTest("No blog post ID or admin token available")
+        
+        response = requests.delete(
+            f"{self.base_url}/admin/blog/{self.blog_post_id}",
+            headers={"Authorization": f"Bearer {self.admin_token}"}
+        )
+        
+        self.assertEqual(response.status_code, 204, f"Delete blog post failed: {response.text}")
+        print(f"✅ Delete blog post successful - ID: {self.blog_post_id}")
 
 if __name__ == "__main__":
     # Create a test suite
