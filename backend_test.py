@@ -8,12 +8,19 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
     def setUp(self):
         self.base_url = "https://3a2ccf66-7b18-4c22-84c9-06710173f4c5.preview.emergentagent.com/api"
         self.token = None
+        self.admin_token = None
         self.test_user = {
             "username": f"testuser_{uuid.uuid4().hex[:8]}",
             "email": f"testuser_{uuid.uuid4().hex[:8]}@example.com",
             "password": "Test@123456"
         }
+        self.admin_credentials = {
+            "username": "admin@example.com",
+            "password": "admin123"
+        }
         self.island_id = None
+        self.blog_post_id = None
+        self.blog_post_slug = None
 
     def test_01_register_user(self):
         """Test user registration"""
