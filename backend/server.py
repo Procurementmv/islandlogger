@@ -391,7 +391,7 @@ async def create_blog_post(
     blog_post = BlogPost(
         **post_data.model_dump(),
         author_id=current_admin.id,
-        published_date=post_data.published_date or datetime.utcnow() if post_data.is_published else None
+        published_date=post_data.published_date or (datetime.utcnow() if post_data.is_published else None)
     )
     
     await db[BLOG_POSTS_COLLECTION].insert_one(blog_post.model_dump())
