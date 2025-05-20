@@ -30,6 +30,9 @@ export default function Map({ islands }) {
   const { user } = useAuth();
   const [visitedIslands, setVisitedIslands] = useState([]);
   const [filterType, setFilterType] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterAtoll, setFilterAtoll] = useState('all');
+  const [atolls, setAtolls] = useState([]);
   
   // Center of the Maldives for initial map view
   const position = [3.2028, 73.2207];
