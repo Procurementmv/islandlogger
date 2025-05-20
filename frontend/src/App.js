@@ -11,7 +11,17 @@ import IslandDetails from "./components/IslandDetails";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import Dashboard from "./components/Dashboard";
+import Blog from "./components/Blog";
+import BlogPost from "./components/BlogPost";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+
+// Admin Components
+import AdminDashboard from "./components/admin/AdminDashboard";
+import AdminHome from "./components/admin/AdminHome";
+import IslandManager from "./components/admin/IslandManager";
+import IslandForm from "./components/admin/IslandForm";
+import BlogManager from "./components/admin/BlogManager";
+import UserManager from "./components/admin/UserManager";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -26,6 +36,25 @@ const ProtectedRoute = ({ children }) => {
   
   if (!user) {
     return <Navigate to="/login" />;
+  }
+  
+  return children;
+};
+
+// Admin route wrapper
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+  
+  if (!user.is_admin) {
+    return <Navigate to="/dashboard" />;
   }
   
   return children;
@@ -68,10 +97,15 @@ function App() {
               <div className="text-center p-8 text-red-600">{error}</div>
             ) : (
               <Routes>
+                {/* Public routes */}
                 <Route path="/" element={<Map islands={islands} />} />
                 <Route path="/island/:id" element={<IslandDetails />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/:slug" element={<BlogPost />} />
+                
+                {/* Protected routes */}
                 <Route 
                   path="/dashboard" 
                   element={
@@ -80,6 +114,29 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
+                
+                {/* Admin routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                >
+                  <Route index element={<AdminHome />} />
+                  
+                  {/* Island management */}
+                  <Route path="islands" element={<IslandManager />} />
+                  <Route path="islands/create" element={<IslandForm />} />
+                  <Route path="islands/edit/:id" element={<IslandForm />} />
+                  
+                  {/* Blog management */}
+                  <Route path="blog" element={<BlogManager />} />
+                  
+                  {/* User management */}
+                  <Route path="users" element={<UserManager />} />
+                </Route>
               </Routes>
             )}
           </main>
