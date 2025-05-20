@@ -656,7 +656,21 @@ async def initialize_data():
                 "type": "inhabited",
                 "population": 133412,
                 "description": "Capital city of the Maldives",
-                "tags": ["capital", "city", "urban"]
+                "tags": ["capital", "city", "urban"],
+                "photos": [
+                    {
+                        "url": "https://images.unsplash.com/photo-1552460421-5c444e181195?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Aerial view of Malé city"
+                    },
+                    {
+                        "url": "https://images.unsplash.com/photo-1589985270379-a94ef01af567?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Malé waterfront"
+                    },
+                    {
+                        "url": "https://images.unsplash.com/photo-1589197015603-f877d837654f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Streets of Malé"
+                    }
+                ]
             },
             {
                 "name": "Hulhumalé",
@@ -666,7 +680,17 @@ async def initialize_data():
                 "type": "inhabited",
                 "population": 50000,
                 "description": "Artificial island built to meet housing needs",
-                "tags": ["artificial", "urban", "housing"]
+                "tags": ["artificial", "urban", "housing"],
+                "photos": [
+                    {
+                        "url": "https://images.unsplash.com/photo-1586500052016-4e713559af4d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Beach at Hulhumalé"
+                    },
+                    {
+                        "url": "https://images.unsplash.com/photo-1586500051755-8bec95a731d1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                        "caption": "Residential area"
+                    }
+                ]
             },
             {
                 "name": "Kuramathi",
