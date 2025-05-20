@@ -181,13 +181,17 @@ export default function AdManager() {
               </p>
             </div>
             {filter !== 'all' ? (
-              <div className="mt-5">
-                <button
-                  onClick={() => setFilter('all')}
+              <div className="mt-5 flex flex-wrap gap-4">
+                <Link
+                  to="/admin/ads/create"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                 >
-                  Show All Ads
-                </button>
+                  <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                  </svg>
+                  Manage Ads
+                </Link>
               </div>
             ) : (
               <div className="mt-5">
