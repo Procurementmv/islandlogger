@@ -91,6 +91,38 @@ export default function Map({ islands }) {
       {/* Island type filter buttons */}
       <div className="bg-white p-4 shadow-md">
         <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+                Search Islands
+              </label>
+              <input
+                type="text"
+                id="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, atoll, or tag..."
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="atoll" className="block text-sm font-medium text-gray-700 mb-1">
+                Filter by Atoll
+              </label>
+              <select
+                id="atoll"
+                value={filterAtoll}
+                onChange={(e) => setFilterAtoll(e.target.value)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              >
+                <option value="all">All Atolls</option>
+                {atolls.map(atoll => (
+                  <option key={atoll} value={atoll}>{atoll}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
           <div className="flex flex-wrap gap-2">
             <button 
               className={`px-4 py-2 rounded-md text-sm font-medium ${filterType === 'all' 
@@ -132,6 +164,11 @@ export default function Map({ islands }) {
             >
               Industrial
             </button>
+          </div>
+          
+          {/* Show island count */}
+          <div className="mt-2 text-sm text-gray-500">
+            Showing {filteredIslands.length} of {islands.length} islands
           </div>
         </div>
       </div>
