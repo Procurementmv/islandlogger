@@ -1,16 +1,21 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Body, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
+import json
+import passlib.hash as hash
+import jwt
+from bson import json_util
 
-
+# Set up root directory and load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -19,38 +24,371 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# JWT Settings
+SECRET_KEY = os.environ.get("SECRET_KEY", "maldives_island_tracker_secret_key")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 week
+
 # Create the main app without a prefix
 app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# OAuth2 scheme for token authentication
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
+
+# Define MongoDB collection names
+USERS_COLLECTION = "users"
+ISLANDS_COLLECTION = "islands"
+VISITS_COLLECTION = "visits"
+BADGES_COLLECTION = "badges"
 
 # Define Models
-class StatusCheck(BaseModel):
+class Island(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    name: str
+    atoll: str
+    lat: float
+    lng: float
+    type: str  # "resort", "inhabited", "uninhabited", "industrial"
+    population: Optional[int] = None
+    description: Optional[str] = None
+    tags: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class IslandCreate(BaseModel):
+    name: str
+    atoll: str
+    lat: float
+    lng: float
+    type: str
+    population: Optional[int] = None
+    description: Optional[str] = None
+    tags: List[str] = []
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
+class UserBase(BaseModel):
+    email: EmailStr
+    username: str
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+class UserCreate(UserBase):
+    password: str
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+class User(UserBase):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    visits_count: int = 0
+    badges: List[str] = []
+
+class UserInDB(User):
+    hashed_password: str
+
+class Visit(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    island_id: str
+    visit_date: datetime
+    notes: Optional[str] = None
+    photos: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class VisitCreate(BaseModel):
+    island_id: str
+    visit_date: datetime
+    notes: Optional[str] = None
+    photos: List[str] = []
+
+class Badge(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    criteria: Dict[str, Any]
+    icon: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    user_id: Optional[str] = None
+
+# Helper Functions
+def parse_json(data):
+    return json.loads(json_util.dumps(data))
+
+def get_password_hash(password: str) -> str:
+    return hash.bcrypt.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return hash.bcrypt.verify(plain_password, hashed_password)
+
+async def get_user_by_email(email: str):
+    user = await db[USERS_COLLECTION].find_one({"email": email})
+    if user:
+        return UserInDB(**user)
+    return None
+
+async def get_user_by_id(user_id: str):
+    user = await db[USERS_COLLECTION].find_one({"id": user_id})
+    if user:
+        return UserInDB(**user)
+    return None
+
+async def authenticate_user(email: str, password: str):
+    user = await get_user_by_email(email)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+        token_data = TokenData(user_id=user_id)
+    except jwt.PyJWTError:
+        raise credentials_exception
+    user = await get_user_by_id(token_data.user_id)
+    if user is None:
+        raise credentials_exception
+    return user
+
+# API Routes - Auth
+@api_router.post("/register", response_model=User)
+async def register_user(user_data: UserCreate):
+    # Check if user exists
+    existing_user = await get_user_by_email(user_data.email)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create new user
+    hashed_password = get_password_hash(user_data.password)
+    user_in_db = UserInDB(
+        **user_data.model_dump(exclude={"password"}),
+        hashed_password=hashed_password
+    )
+    
+    await db[USERS_COLLECTION].insert_one(user_in_db.model_dump())
+    return User(**user_in_db.model_dump(exclude={"hashed_password"}))
+
+@api_router.post("/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.id}, expires_delta=access_token_expires
+    )
+    
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@api_router.get("/users/me", response_model=User)
+async def read_users_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+# API Routes - Islands
+@api_router.get("/islands", response_model=List[Island])
+async def get_islands():
+    islands = await db[ISLANDS_COLLECTION].find().to_list(1000)
+    return [Island(**island) for island in islands]
+
+@api_router.get("/islands/{island_id}", response_model=Island)
+async def get_island(island_id: str):
+    island = await db[ISLANDS_COLLECTION].find_one({"id": island_id})
+    if not island:
+        raise HTTPException(status_code=404, detail="Island not found")
+    return Island(**island)
+
+@api_router.post("/islands", response_model=Island)
+async def create_island(island_data: IslandCreate):
+    island = Island(**island_data.model_dump())
+    await db[ISLANDS_COLLECTION].insert_one(island.model_dump())
+    return island
+
+# API Routes - Visits
+@api_router.post("/visits", response_model=Visit)
+async def create_visit(
+    visit_data: VisitCreate,
+    current_user: User = Depends(get_current_user)
+):
+    # Check if island exists
+    island = await db[ISLANDS_COLLECTION].find_one({"id": visit_data.island_id})
+    if not island:
+        raise HTTPException(status_code=404, detail="Island not found")
+    
+    # Create visit
+    visit = Visit(
+        **visit_data.model_dump(),
+        user_id=current_user.id
+    )
+    
+    await db[VISITS_COLLECTION].insert_one(visit.model_dump())
+    
+    # Update user visit count
+    await db[USERS_COLLECTION].update_one(
+        {"id": current_user.id},
+        {"$inc": {"visits_count": 1}}
+    )
+    
+    return visit
+
+@api_router.get("/visits/user", response_model=List[Visit])
+async def get_user_visits(current_user: User = Depends(get_current_user)):
+    visits = await db[VISITS_COLLECTION].find({"user_id": current_user.id}).to_list(1000)
+    return [Visit(**visit) for visit in visits]
+
+@api_router.get("/islands/visited", response_model=List[Island])
+async def get_visited_islands(current_user: User = Depends(get_current_user)):
+    # Get all visit records for the user
+    visits = await db[VISITS_COLLECTION].find({"user_id": current_user.id}).to_list(1000)
+    island_ids = [visit["island_id"] for visit in visits]
+    
+    # Get the island details for visited islands
+    if island_ids:
+        islands = await db[ISLANDS_COLLECTION].find({"id": {"$in": island_ids}}).to_list(1000)
+        return [Island(**island) for island in islands]
+    return []
+
+# Initialize the Maldives islands data if the collection is empty
+@app.on_event("startup")
+async def initialize_data():
+    # Check if islands collection is empty
+    island_count = await db[ISLANDS_COLLECTION].count_documents({})
+    
+    if island_count == 0:
+        # Sample islands data for the Maldives
+        sample_islands = [
+            {
+                "name": "Malé",
+                "atoll": "Kaafu",
+                "lat": 4.1755,
+                "lng": 73.5093,
+                "type": "inhabited",
+                "population": 133412,
+                "description": "Capital city of the Maldives",
+                "tags": ["capital", "city", "urban"]
+            },
+            {
+                "name": "Hulhumalé",
+                "atoll": "Kaafu",
+                "lat": 4.2100,
+                "lng": 73.5555,
+                "type": "inhabited",
+                "population": 50000,
+                "description": "Artificial island built to meet housing needs",
+                "tags": ["artificial", "urban", "housing"]
+            },
+            {
+                "name": "Kuramathi",
+                "atoll": "Alifu",
+                "lat": 4.2655,
+                "lng": 72.9897,
+                "type": "resort",
+                "description": "Luxury resort island with water villas",
+                "tags": ["resort", "luxury", "diving"]
+            },
+            {
+                "name": "Maafushi",
+                "atoll": "Kaafu",
+                "lat": 3.9432,
+                "lng": 73.4881,
+                "type": "inhabited",
+                "population": 3025,
+                "description": "Popular local island for tourism",
+                "tags": ["local", "tourism", "budget"]
+            },
+            {
+                "name": "Baros",
+                "atoll": "Kaafu",
+                "lat": 4.2826,
+                "lng": 73.4273,
+                "type": "resort",
+                "description": "Small luxury resort island",
+                "tags": ["resort", "luxury", "romantic"]
+            },
+            {
+                "name": "Fuvahmulah",
+                "atoll": "Gnaviyani",
+                "lat": -0.2986,
+                "lng": 73.4239,
+                "type": "inhabited",
+                "population": 8055,
+                "description": "Unique island with freshwater lakes",
+                "tags": ["local", "nature", "lakes"]
+            },
+            {
+                "name": "Addu City",
+                "atoll": "Addu",
+                "lat": -0.6301,
+                "lng": 73.1579,
+                "type": "inhabited",
+                "population": 18000,
+                "description": "Southernmost atoll with connected islands",
+                "tags": ["city", "history", "beaches"]
+            },
+            {
+                "name": "Veligandu",
+                "atoll": "Alifu",
+                "lat": 4.2979,
+                "lng": 72.9651,
+                "type": "resort",
+                "description": "Popular resort with pristine beaches",
+                "tags": ["resort", "honeymoon", "beaches"]
+            },
+            {
+                "name": "Thilafushi",
+                "atoll": "Kaafu",
+                "lat": 4.1824,
+                "lng": 73.4320,
+                "type": "industrial",
+                "description": "Artificial island used for industry and waste management",
+                "tags": ["industrial", "artificial"]
+            },
+            {
+                "name": "Thulusdhoo",
+                "atoll": "Kaafu",
+                "lat": 4.3744,
+                "lng": 73.6482,
+                "type": "inhabited",
+                "population": 1400,
+                "description": "Known for surfing and Coca-Cola factory",
+                "tags": ["local", "surfing", "coke"]
+            }
+        ]
+        
+        # Insert the sample islands
+        for island_data in sample_islands:
+            island = Island(**island_data)
+            await db[ISLANDS_COLLECTION].insert_one(island.model_dump())
+        
+        logging.info(f"Initialized {len(sample_islands)} sample islands")
 
 # Include the router in the main app
 app.include_router(api_router)
