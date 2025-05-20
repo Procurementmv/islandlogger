@@ -104,6 +104,13 @@ export default function Navbar() {
               Map
             </Link>
             <Link 
+              to="/islands" 
+              className="text-white hover:bg-blue-600 hover:bg-opacity-75 block px-3 py-2 rounded-md text-base font-medium"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Islands
+            </Link>
+            <Link 
               to="/blog" 
               className="text-white hover:bg-blue-600 hover:bg-opacity-75 block px-3 py-2 rounded-md text-base font-medium"
               onClick={() => setMobileMenuOpen(false)}
