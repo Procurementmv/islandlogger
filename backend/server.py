@@ -107,6 +107,30 @@ class Badge(BaseModel):
     criteria: Dict[str, Any]
     icon: str
 
+class BlogPost(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    content: str
+    author_id: str
+    slug: str
+    excerpt: Optional[str] = None
+    featured_image: Optional[str] = None
+    tags: List[str] = []
+    is_published: bool = True
+    published_date: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class BlogPostCreate(BaseModel):
+    title: str
+    content: str
+    slug: str
+    excerpt: Optional[str] = None
+    featured_image: Optional[str] = None
+    tags: List[str] = []
+    is_published: bool = True
+    published_date: Optional[datetime] = None
+
 class Token(BaseModel):
     access_token: str
     token_type: str
