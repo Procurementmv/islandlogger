@@ -370,6 +370,14 @@ if __name__ == "__main__":
     suite.addTest(MaldivesIslandTrackerAPITest("test_07_mark_island_as_visited"))
     suite.addTest(MaldivesIslandTrackerAPITest("test_08_get_user_visits"))
     suite.addTest(MaldivesIslandTrackerAPITest("test_09_get_visited_islands"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_10_get_blog_posts"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_11_get_blog_post_by_slug"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_12_admin_login"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_13_get_admin_profile"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_14_get_all_users"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_15_create_blog_post"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_16_create_island"))
+    suite.addTest(MaldivesIslandTrackerAPITest("test_17_delete_blog_post"))
     
     # Run the tests with more detailed output
     print("\n===== MALDIVES ISLAND TRACKER API TEST =====\n")
