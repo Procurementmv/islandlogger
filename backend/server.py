@@ -388,10 +388,15 @@ async def create_blog_post(
         )
     
     # Create new blog post
+    # Extract the data from the model
+    post_dict = post_data.model_dump()
+    # Handle published_date manually
+    if post_data.is_published and not post_data.published_date:
+        post_dict["published_date"] = datetime.utcnow()
+    
     blog_post = BlogPost(
-        **post_data.model_dump(),
-        author_id=current_admin.id,
-        published_date=post_data.published_date or (datetime.utcnow() if post_data.is_published else None)
+        **post_dict,
+        author_id=current_admin.id
     )
     
     await db[BLOG_POSTS_COLLECTION].insert_one(blog_post.model_dump())
