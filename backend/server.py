@@ -132,6 +132,33 @@ class BlogPostCreate(BaseModel):
     is_published: bool = True
     published_date: Optional[datetime] = None
 
+class Ad(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: Optional[str] = None
+    placement: str  # "header", "sidebar", "footer", "blog-inline", "island-detail"
+    image_url: Optional[str] = None
+    destination_url: str
+    alt_text: Optional[str] = None
+    size: str  # "728x90", "300x250", "160x600", etc.
+    is_active: bool = True
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class AdCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    placement: str
+    image_url: Optional[str] = None
+    destination_url: str
+    alt_text: Optional[str] = None
+    size: str
+    is_active: bool = True
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+
 class Token(BaseModel):
     access_token: str
     token_type: str
