@@ -41,7 +41,11 @@ export default function Map({ islands }) {
     if (user) {
       fetchVisitedIslands();
     }
-  }, [user]);
+    
+    // Extract unique atolls from islands
+    const uniqueAtolls = [...new Set(islands.map(island => island.atoll))].sort();
+    setAtolls(uniqueAtolls);
+  }, [user, islands]);
 
   const fetchVisitedIslands = async () => {
     if (!user) return;
