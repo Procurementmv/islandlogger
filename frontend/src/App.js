@@ -144,6 +144,11 @@ function App() {
                   
                   {/* Analytics */}
                   <Route path="analytics" element={<AnalyticsDashboard />} />
+                  
+                  {/* Ad management */}
+                  <Route path="ads" element={<AdManager />} />
+                  <Route path="ads/create" element={<AdForm />} />
+                  <Route path="ads/edit/:id" element={<AdForm />} />
                 </Route>
               </Routes>
             )}
