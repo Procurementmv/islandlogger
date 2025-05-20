@@ -31,7 +31,9 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         """Test user login"""
         print("\n🔍 Testing user login")
         
-        # FastAPI OAuth2 password flow expects username field for email
+        # Try to login with the registered user
+        print(f"Attempting login with email: {self.test_user['email']}")
+        
         response = requests.post(
             f"{self.base_url}/login",
             data={
@@ -40,6 +42,9 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"}
         )
+        
+        print(f"Login response status: {response.status_code}")
+        print(f"Login response body: {response.text}")
         
         self.assertEqual(response.status_code, 200, f"Login failed: {response.text}")
         data = response.json()
