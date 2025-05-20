@@ -26,9 +26,17 @@ export default function Navbar() {
               <Link to="/" className="text-white hover:bg-blue-600 hover:bg-opacity-75 px-3 py-2 rounded-md text-sm font-medium">
                 Map
               </Link>
+              <Link to="/blog" className="text-white hover:bg-blue-600 hover:bg-opacity-75 px-3 py-2 rounded-md text-sm font-medium">
+                Blog
+              </Link>
               {user && (
                 <Link to="/dashboard" className="text-white hover:bg-blue-600 hover:bg-opacity-75 px-3 py-2 rounded-md text-sm font-medium">
                   Dashboard
+                </Link>
+              )}
+              {user && user.is_admin && (
+                <Link to="/admin" className="text-white hover:bg-blue-600 hover:bg-opacity-75 px-3 py-2 rounded-md text-sm font-medium">
+                  Admin
                 </Link>
               )}
             </div>
