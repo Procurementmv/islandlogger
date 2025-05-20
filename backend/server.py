@@ -79,6 +79,7 @@ class User(UserBase):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     visits_count: int = 0
     badges: List[str] = []
+    is_admin: bool = False
 
 class UserInDB(User):
     hashed_password: str
