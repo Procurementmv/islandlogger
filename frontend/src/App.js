@@ -137,6 +137,9 @@ function App() {
                   
                   {/* User management */}
                   <Route path="users" element={<UserManager />} />
+                  
+                  {/* Analytics */}
+                  <Route path="analytics" element={<AnalyticsDashboard />} />
                 </Route>
               </Routes>
             )}
