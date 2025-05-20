@@ -26,7 +26,7 @@ export default function Home() {
             </p>
             <div className="mt-10 flex space-x-4">
               <Link
-                to="/"
+                to="/map"
                 className="inline-flex items-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 shadow-lg"
               >
                 Explore Map
