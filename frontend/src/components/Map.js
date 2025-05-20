@@ -66,9 +66,21 @@ export default function Map({ islands }) {
     }
   };
 
-  const filteredIslands = filterType === 'all' 
-    ? islands 
-    : islands.filter(island => island.type === filterType);
+  const filteredIslands = islands.filter(island => {
+    // Type filter
+    const matchesType = filterType === 'all' || island.type === filterType;
+    
+    // Atoll filter
+    const matchesAtoll = filterAtoll === 'all' || island.atoll === filterAtoll;
+    
+    // Search query
+    const matchesSearch = searchQuery === '' || 
+      island.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      island.atoll.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (island.tags && island.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
+    
+    return matchesType && matchesAtoll && matchesSearch;
+  });
 
   const openIslandDetails = (islandId) => {
     navigate(`/island/${islandId}`);
