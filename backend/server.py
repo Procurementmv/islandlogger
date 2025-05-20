@@ -60,6 +60,7 @@ class Island(BaseModel):
     is_featured: bool = False
     featured_image: Optional[str] = None
     featured_order: Optional[int] = None
+    photos: List[Dict[str, str]] = []  # [{url: string, caption: string}]
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class IslandCreate(BaseModel):
@@ -74,6 +75,7 @@ class IslandCreate(BaseModel):
     is_featured: bool = False
     featured_image: Optional[str] = None
     featured_order: Optional[int] = None
+    photos: List[Dict[str, str]] = []  # [{url: string, caption: string}]
 
 class UserBase(BaseModel):
     email: EmailStr
