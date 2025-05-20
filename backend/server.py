@@ -215,8 +215,11 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 
 # API Routes - Islands
 @api_router.get("/islands", response_model=List[Island])
-async def get_islands():
-    islands = await db[ISLANDS_COLLECTION].find().to_list(1000)
+async def get_islands(type: Optional[str] = None):
+    query = {}
+    if type and type != "all":
+        query["type"] = type
+    islands = await db[ISLANDS_COLLECTION].find(query).to_list(1000)
     return [Island(**island) for island in islands]
 
 @api_router.get("/islands/{island_id}", response_model=Island)
