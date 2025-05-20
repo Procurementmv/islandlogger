@@ -124,6 +124,8 @@ class BlogPost(BaseModel):
     featured_image: Optional[str] = None
     tags: List[str] = []
     is_published: bool = True
+    is_featured: bool = False
+    featured_order: Optional[int] = None
     published_date: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -136,6 +138,8 @@ class BlogPostCreate(BaseModel):
     featured_image: Optional[str] = None
     tags: List[str] = []
     is_published: bool = True
+    is_featured: bool = False
+    featured_order: Optional[int] = None
     published_date: Optional[datetime] = None
 
 class Ad(BaseModel):
