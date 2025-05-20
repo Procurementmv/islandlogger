@@ -51,8 +51,8 @@ export default function Map({ islands }) {
         }
       });
       
-      // Create a Set of visited island IDs for faster lookups
-      const visitedIds = new Set(response.data.map(island => island.id));
+      // Create an array of visited island IDs for lookups
+      const visitedIds = response.data.map(island => island.id);
       setVisitedIslands(visitedIds);
     } catch (error) {
       console.error('Error fetching visited islands:', error);
