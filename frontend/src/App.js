@@ -13,6 +13,7 @@ import Register from "./components/Register";
 import Dashboard from "./components/Dashboard";
 import Blog from "./components/Blog";
 import BlogPost from "./components/BlogPost";
+import Home from "./components/Home";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Admin Components
