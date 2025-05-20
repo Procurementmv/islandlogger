@@ -532,6 +532,106 @@ async def admin_delete_island(
     await db[ISLANDS_COLLECTION].delete_one({"id": island_id})
     return None
 
+# Routes for Featured Islands
+@api_router.get("/featured/islands", response_model=List[Island])
+async def get_featured_islands():
+    featured_islands = await db[ISLANDS_COLLECTION].find(
+        {"is_featured": True}
+    ).sort("featured_order", 1).to_list(10)  # Limit to 10 featured islands
+    
+    return [Island(**island) for island in featured_islands]
+
+# Routes for Featured Articles
+@api_router.get("/featured/articles", response_model=List[BlogPost])
+async def get_featured_articles():
+    featured_articles = await db[BLOG_POSTS_COLLECTION].find(
+        {"is_featured": True, "is_published": True}
+    ).sort("featured_order", 1).to_list(8)  # Limit to 8 featured articles
+    
+    return [BlogPost(**article) for article in featured_articles]
+
+# Ad Space Management API Routes
+@api_router.get("/ads", response_model=List[Ad])
+async def get_ads(placement: Optional[str] = None):
+    query = {}
+    
+    # Filter by placement if specified
+    if placement:
+        query["placement"] = placement
+    
+    # Only show active ads within their date range
+    now = datetime.utcnow()
+    query["is_active"] = True
+    query["$or"] = [
+        {"start_date": {"$lte": now}, "end_date": {"$gte": now}},
+        {"start_date": {"$lte": now}, "end_date": None},
+        {"start_date": None, "end_date": {"$gte": now}},
+        {"start_date": None, "end_date": None}
+    ]
+    
+    ads = await db[ADS_COLLECTION].find(query).to_list(100)
+    return [Ad(**ad) for ad in ads]
+
+@api_router.get("/ads/{ad_id}", response_model=Ad)
+async def get_ad(ad_id: str):
+    ad = await db[ADS_COLLECTION].find_one({"id": ad_id})
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+    return Ad(**ad)
+
+# Admin Ad Management Routes
+@api_router.get("/admin/ads", response_model=List[Ad])
+async def admin_get_ads(
+    current_admin: User = Depends(get_current_admin)
+):
+    ads = await db[ADS_COLLECTION].find().to_list(100)
+    return [Ad(**ad) for ad in ads]
+
+@api_router.post("/admin/ads", response_model=Ad)
+async def admin_create_ad(
+    ad_data: AdCreate,
+    current_admin: User = Depends(get_current_admin)
+):
+    ad = Ad(**ad_data.model_dump())
+    await db[ADS_COLLECTION].insert_one(ad.model_dump())
+    return ad
+
+@api_router.put("/admin/ads/{ad_id}", response_model=Ad)
+async def admin_update_ad(
+    ad_id: str,
+    ad_data: AdCreate,
+    current_admin: User = Depends(get_current_admin)
+):
+    # Check if ad exists
+    ad = await db[ADS_COLLECTION].find_one({"id": ad_id})
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+    
+    # Update the ad
+    update_data = ad_data.model_dump()
+    update_data["updated_at"] = datetime.utcnow()
+    
+    await db[ADS_COLLECTION].update_one(
+        {"id": ad_id},
+        {"$set": update_data}
+    )
+    
+    updated_ad = await db[ADS_COLLECTION].find_one({"id": ad_id})
+    return Ad(**updated_ad)
+
+@api_router.delete("/admin/ads/{ad_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def admin_delete_ad(
+    ad_id: str,
+    current_admin: User = Depends(get_current_admin)
+):
+    # Check if ad exists
+    ad = await db[ADS_COLLECTION].find_one({"id": ad_id})
+    if not ad:
+        raise HTTPException(status_code=404, detail="Ad not found")
+    
+    await db[ADS_COLLECTION].delete_one({"id": ad_id})
+    return None
+
 # Initialize the Maldives islands data if the collection is empty
 @app.on_event("startup")
 async def initialize_data():
