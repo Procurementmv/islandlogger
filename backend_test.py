@@ -22,7 +22,7 @@ class MaldivesIslandTrackerAPITest(unittest.TestCase):
         """Login as admin and get token"""
         response = requests.post(
             f"{BACKEND_URL}/login", 
-            json=self.admin_credentials
+            data={"username": "admin@example.com", "password": "admin123"}
         )
         if response.status_code == 200:
             self.token = response.json().get("access_token")
