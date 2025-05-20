@@ -57,6 +57,9 @@ class Island(BaseModel):
     population: Optional[int] = None
     description: Optional[str] = None
     tags: List[str] = []
+    is_featured: bool = False
+    featured_image: Optional[str] = None
+    featured_order: Optional[int] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class IslandCreate(BaseModel):
@@ -68,6 +71,9 @@ class IslandCreate(BaseModel):
     population: Optional[int] = None
     description: Optional[str] = None
     tags: List[str] = []
+    is_featured: bool = False
+    featured_image: Optional[str] = None
+    featured_order: Optional[int] = None
 
 class UserBase(BaseModel):
     email: EmailStr
